@@ -100,7 +100,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) {
         printMessage("WebSocket Client disconnected!");
         eventLoopGroup.shutdownGracefully().addListener(future -> {
-            TestRunner.removeConnection();
+            WebSocketClientRunner.removeConnection();
             countDownLatch.countDown();
         });
     }

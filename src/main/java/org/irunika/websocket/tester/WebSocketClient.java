@@ -103,7 +103,7 @@ public class WebSocketClient {
 
         channel = b.connect(uri.getHost(), port).sync().channel();
         handler.handshakeFuture().sync();
-        TestRunner.addConnection();
+        WebSocketClientRunner.addConnection();
     }
 
     public void sendText(String text) throws InterruptedException {
