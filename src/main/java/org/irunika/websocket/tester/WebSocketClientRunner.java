@@ -67,6 +67,10 @@ public class WebSocketClientRunner implements Runnable {
         return webSocketClient.getEndTime();
     }
 
+    public int getNoOfErrorMessages() {
+        return webSocketClient.getNoOfErrorMessages();
+    }
+
     public int getClientId() {
         return clientId;
     }

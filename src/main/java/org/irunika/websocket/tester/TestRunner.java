@@ -1,7 +1,6 @@
 package org.irunika.websocket.tester;
 
 import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.irunika.websocket.tester.config.Args;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,8 @@ public class TestRunner {
         try {
 
             for (int i = 0; i < noOfConnections; i++) {
-                WebSocketClientRunner webSocketClientRunner = new WebSocketClientRunner(i, url, noOfMessages, payloadInBytes, countDownLatch);
+                WebSocketClientRunner webSocketClientRunner = new WebSocketClientRunner(i, url, noOfMessages,
+                                                                                        payloadInBytes, countDownLatch);
                 webSocketClientRunners.add(webSocketClientRunner);
                 if (i == 0L) {
                     testStartTime = System.currentTimeMillis();
@@ -52,17 +52,21 @@ public class TestRunner {
         } finally {
             long testEndTime = System.currentTimeMillis();
             executor.shutdown();
+            long totalNoOfMsgs = noOfConnections * noOfMessages;
             double totalTps = 0;
+            int totalNoOfErrorMessages = 0;
             for (WebSocketClientRunner webSocketClientRunner : webSocketClientRunners) {
                 double tps = (double) (1000 * noOfMessages) / (webSocketClientRunner.getEndTime() - webSocketClientRunner
                         .getStartTime());
                 totalTps = totalTps + tps;
+                totalNoOfErrorMessages = totalNoOfErrorMessages + webSocketClientRunner.getNoOfErrorMessages();
                 log.info("Client {}: Test run TPS: {}", webSocketClientRunner.getClientId(), tps);
             }
 
             log.info("Max no of active connections: {}", WebSocketClientRunner.getMaxNoOfActiveConnections());
             log.info("Average TPS per client: {}", (totalTps / noOfConnections));
-            log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, noOfConnections * noOfMessages));
+            log.info("No of error messages:{} out of : {}", totalNoOfErrorMessages, totalNoOfMsgs);
+            log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, totalNoOfMsgs));
             log.info("Running is done!");
         }
     }
@@ -71,5 +75,9 @@ public class TestRunner {
         long totalTimeInMillis = testEndTime - testStartTime;
         double totalTimeInSecs = (double) totalTimeInMillis / 1000;
         return (double) totalNoOfMsgs / totalTimeInSecs;
+    }
+
+    public static double getErrorPercentage(int noOfErrorMsgs, long totalNoOfMsgs) {
+        return ((double) noOfErrorMsgs * 100) / totalNoOfMsgs;
     }
 }

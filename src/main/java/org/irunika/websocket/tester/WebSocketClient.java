@@ -114,4 +114,8 @@ public class WebSocketClient {
     public long getEndTime() {
         return handler.getEndTime();
     }
+
+    public int getNoOfErrorMessages() {
+        return handler.getNoOfErrorMessages();
+    }
 }

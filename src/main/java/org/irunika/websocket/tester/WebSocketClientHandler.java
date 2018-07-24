@@ -70,6 +70,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     private final CountDownLatch countDownLatch;
     private ChannelPromise handshakeFuture;
     private final AtomicInteger noOfMessageAtomicInteger = new AtomicInteger();
+    private final AtomicInteger noOfErrorMessagesAtomicInteger = new AtomicInteger();
     private long endTime;
 
     public WebSocketClientHandler(int clientId, WebSocketClientHandshaker handshaker, Queue<String> messageQueue,
@@ -135,6 +136,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
                 String actual = textFrame.text();
 
                 if (!expected.equals(actual)) {
+                    noOfErrorMessagesAtomicInteger.incrementAndGet();
                     printMessage(String.format("Error receiving message expected: %s, actual: %s", expected, actual));
                 }
                 noOfMessageAtomicInteger.incrementAndGet();
@@ -168,5 +170,9 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     private void printMessage(String msg) {
         log.info("Client {}: {}", clientId, msg);
+    }
+
+    public int getNoOfErrorMessages() {
+        return noOfErrorMessagesAtomicInteger.get();
     }
 }
