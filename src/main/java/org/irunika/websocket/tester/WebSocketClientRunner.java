@@ -8,6 +8,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLException;
 
+/**
+ * Runner for WebSocket client.
+ *
+ * @author irunika
+ */
 public class WebSocketClientRunner implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketClientRunner.class);

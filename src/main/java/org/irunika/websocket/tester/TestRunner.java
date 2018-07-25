@@ -12,6 +12,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This class is contain the main class to run the test.
+ *
+ * @author irunika
+ */
 public class TestRunner {
 
     private static final Logger log = LoggerFactory.getLogger(TestRunner.class);

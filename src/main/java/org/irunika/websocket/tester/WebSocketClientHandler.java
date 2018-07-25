@@ -58,6 +58,11 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Client handler for WebSocket frames.
+ *
+ * @author irunika
+ */
 public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketClientHandler.class);
@@ -69,7 +74,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     private final EventLoopGroup eventLoopGroup;
     private final CountDownLatch countDownLatch;
     private ChannelPromise handshakeFuture;
-    private final AtomicInteger noOfMessageAtomicInteger = new AtomicInteger();
+    private final AtomicInteger noOfMessagesAtomicInteger = new AtomicInteger();
     private final AtomicInteger noOfErrorMessagesAtomicInteger = new AtomicInteger();
     private long endTime;
 
@@ -99,7 +104,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        printMessage("WebSocket Client disconnected!");
+        logMessage("WebSocket Client disconnected!");
         eventLoopGroup.shutdownGracefully().addListener(future -> {
             WebSocketClientRunner.removeConnection();
             countDownLatch.countDown();
@@ -111,11 +116,11 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         Channel ch = ctx.channel();
         if (!handshaker.isHandshakeComplete()) {
             handshaker.finishHandshake(ch, (FullHttpResponse) msg);
-            printMessage("WebSocket Client connected!");
+            logMessage("WebSocket Client connected!");
             handshakeFuture.setSuccess();
             ((FullHttpResponse) msg).release();
             return;
@@ -137,20 +142,19 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
                 if (!expected.equals(actual)) {
                     noOfErrorMessagesAtomicInteger.incrementAndGet();
-                    printMessage(String.format("Error receiving message expected: %s, actual: %s", expected, actual));
+                    logMessage(String.format("Error receiving message expected: %s, actual: %s", expected, actual));
                 }
-                noOfMessageAtomicInteger.incrementAndGet();
 
-                if (noOfMessageAtomicInteger.get() == expectedNoOfMsgs) {
+                noOfMessagesAtomicInteger.incrementAndGet();
+                if (noOfMessagesAtomicInteger.get() == expectedNoOfMsgs) {
                     endTime = System.currentTimeMillis();
-
                     ctx.writeAndFlush(new CloseWebSocketFrame(1000, "Going away")).addListener(ChannelFutureListener.CLOSE);
                 }
 
             } else if (frame instanceof PongWebSocketFrame) {
-                printMessage("WebSocket Client received pong");
+                logMessage("WebSocket Client received pong");
             } else if (frame instanceof CloseWebSocketFrame) {
-                printMessage("WebSocket Client received closing " + ((CloseWebSocketFrame) frame).statusCode());
+                logMessage("WebSocket Client received closing " + ((CloseWebSocketFrame) frame).statusCode());
                 ch.close();
             }
         } finally {
@@ -168,7 +172,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-    private void printMessage(String msg) {
+    private void logMessage(String msg) {
         log.info("Client {}: {}", clientId, msg);
     }
 

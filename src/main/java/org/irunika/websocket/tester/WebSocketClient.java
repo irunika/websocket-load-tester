@@ -31,6 +31,8 @@ import javax.net.ssl.SSLException;
 /**
  * WebSocket client for testing.
  * This client validate the round trip of a given message.
+ *
+ * @author irunika
  */
 public class WebSocketClient {
 
