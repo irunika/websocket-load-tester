@@ -8,10 +8,10 @@ public class Args {
     private String url = "";
 
     @Parameter(names = {"-n", "--connections"}, description = "No of connections")
-    private int noOfConnections = 0;
+    private int noOfConnections = 1;
 
     @Parameter(names = {"-m", "--messages"}, description = "No of messages per connection")
-    private int noOfMessages = 0;
+    private int noOfMessages = 100;
 
     @Parameter(names = {"-p", "--payload"}, description = "Payload size in bytes")
     private int payloadInBytes = 100;

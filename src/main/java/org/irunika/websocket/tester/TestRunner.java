@@ -74,11 +74,11 @@ public class TestRunner {
                 log.info("Client {}: Test run TPS: {}", webSocketClientRunner.getClientId(), tps);
             }
 
+            log.info("Average TPS per client: {}", (totalTPS / noOfConnections));
             log.info("Total time taken for the test: {} minutes",
                      testTimeInMinutes > 0 ? testTimeInMinutes : getTimeInSecs(testStartTime, testEndTime) / 60);
-            log.info("Max no of active connections: {}", WebSocketClientRunner.getMaxNoOfActiveConnections());
+            log.info("Max no of concurrent connections: {}/{}", WebSocketClientRunner.getMaxNoOfActiveConnections(), noOfConnections);
             log.info("Total no of message round trips: {}", totalNoOfMessages);
-            log.info("Average TPS per client: {}", (totalTPS / noOfConnections));
             log.info("No of error messages:{} out of : {}", totalNoOfErrorMessages, totalNoOfMessages);
             log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, totalNoOfMessages));
             log.info("Running is done!");
