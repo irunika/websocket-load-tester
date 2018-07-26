@@ -39,17 +39,17 @@ public class WebSocketClient {
     private static final Logger log = LoggerFactory.getLogger(WebSocketClient.class);
 
     private final int clientId;
+    private final int expectedNoOfMessages;
     private final String url;
-    private final int expectedNoOfMsgs;
     private final Queue<String> messageQueue;
     private final CountDownLatch countDownLatch;
     private Channel channel;
     private WebSocketClientHandler handler;
 
-    public WebSocketClient(int clientId, String url, int expectedNoOfMsgs, CountDownLatch countDownLatch) {
+    public WebSocketClient(int clientId, int expectedNoOfMessages, String url, CountDownLatch countDownLatch) {
         this.clientId = clientId;
+        this.expectedNoOfMessages = expectedNoOfMessages;
         this.url = url;
-        this.expectedNoOfMsgs = expectedNoOfMsgs;
         this.countDownLatch = countDownLatch;
         this.messageQueue = new ConcurrentLinkedQueue<>();
     }
@@ -86,9 +86,8 @@ public class WebSocketClient {
         }
 
         EventLoopGroup group = new NioEventLoopGroup();
-        handler = new WebSocketClientHandler(clientId,
-                WebSocketClientHandshakerFactory.newHandshaker(uri,WebSocketVersion.V13, null, true, new DefaultHttpHeaders()),
-                messageQueue, expectedNoOfMsgs, group, countDownLatch);
+        handler = new WebSocketClientHandler(clientId, expectedNoOfMessages, WebSocketClientHandshakerFactory.newHandshaker(
+                uri,WebSocketVersion.V13, null, true, new DefaultHttpHeaders()), messageQueue, group, countDownLatch);
 
         Bootstrap b = new Bootstrap();
         b.group(group).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
@@ -119,5 +118,13 @@ public class WebSocketClient {
 
     public int getNoOfErrorMessages() {
         return handler.getNoOfErrorMessages();
+    }
+
+    public int getNoOfMessagesReceived() {
+        return handler.getNoOfMessagesReceived();
+    }
+
+    public void stop() {
+        handler.setStopReceivingMessages();
     }
 }

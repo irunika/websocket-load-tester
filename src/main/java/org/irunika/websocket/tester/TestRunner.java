@@ -31,6 +31,7 @@ public class TestRunner {
         int noOfConnections = args.getNoOfConnections();
         int noOfMessages = args.getNoOfMessages();
         int payloadInBytes = args.getPayloadInBytes();
+        int testTimeInMinutes = args.getTestTimeInMinutes();
 
         CountDownLatch countDownLatch = new CountDownLatch(noOfConnections);
         List<WebSocketClientRunner> webSocketClientRunners = new LinkedList<>();
@@ -39,15 +40,20 @@ public class TestRunner {
 
         long testStartTime = 0L;
         try {
-
-            for (int i = 0; i < noOfConnections; i++) {
-                WebSocketClientRunner webSocketClientRunner = new WebSocketClientRunner(i, url, noOfMessages,
-                                                                                        payloadInBytes, countDownLatch);
+            for (int clientId = 0; clientId < noOfConnections; clientId++) {
+                WebSocketClientRunner webSocketClientRunner = new WebSocketClientRunner(
+                        clientId, url, testTimeInMinutes > 0 ? -1 : noOfMessages, payloadInBytes, countDownLatch);
                 webSocketClientRunners.add(webSocketClientRunner);
-                if (i == 0L) {
+                if (clientId == 0L) {
                     testStartTime = System.currentTimeMillis();
                 }
                 executor.execute(webSocketClientRunner);
+            }
+
+            if (testTimeInMinutes > 0) {
+                Thread.sleep((long) testTimeInMinutes * 60 * 1000);
+                webSocketClientRunners.forEach(
+                        webSocketClientRunner -> webSocketClientRunner.setStopSendingMessages(true));
             }
 
             if (!countDownLatch.await(Long.MAX_VALUE, TimeUnit.SECONDS)) {
@@ -57,32 +63,41 @@ public class TestRunner {
         } finally {
             long testEndTime = System.currentTimeMillis();
             executor.shutdown();
-            long totalNoOfMsgs = noOfConnections * noOfMessages;
-            double totalTps = 0;
+            long totalNoOfMessages = 0;
+            double totalTPS = 0;
             int totalNoOfErrorMessages = 0;
             for (WebSocketClientRunner webSocketClientRunner : webSocketClientRunners) {
-                double tps = (double) (1000 * noOfMessages) / (webSocketClientRunner.getEndTime() - webSocketClientRunner
-                        .getStartTime());
-                totalTps = totalTps + tps;
+                totalNoOfMessages = totalNoOfMessages + webSocketClientRunner.getNoOfMessagesReceived();
                 totalNoOfErrorMessages = totalNoOfErrorMessages + webSocketClientRunner.getNoOfErrorMessages();
+                double tps = calculateTPS(noOfMessages, webSocketClientRunner);
+                totalTPS = totalTPS + tps;
                 log.info("Client {}: Test run TPS: {}", webSocketClientRunner.getClientId(), tps);
             }
 
+            log.info("Total time taken for the test: {} minutes",
+                     testTimeInMinutes > 0 ? testTimeInMinutes : getTimeInSecs(testStartTime, testEndTime) / 60);
             log.info("Max no of active connections: {}", WebSocketClientRunner.getMaxNoOfActiveConnections());
-            log.info("Average TPS per client: {}", (totalTps / noOfConnections));
-            log.info("No of error messages:{} out of : {}", totalNoOfErrorMessages, totalNoOfMsgs);
-            log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, totalNoOfMsgs));
+            log.info("Total no of message round trips: {}", totalNoOfMessages);
+            log.info("Average TPS per client: {}", (totalTPS / noOfConnections));
+            log.info("No of error messages:{} out of : {}", totalNoOfErrorMessages, totalNoOfMessages);
+            log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, totalNoOfMessages));
             log.info("Running is done!");
         }
     }
 
-    public static double getThroughput(long testStartTime, long testEndTime, long totalNoOfMsgs) {
-        long totalTimeInMillis = testEndTime - testStartTime;
-        double totalTimeInSecs = (double) totalTimeInMillis / 1000;
-        return (double) totalNoOfMsgs / totalTimeInSecs;
+    private static double calculateTPS(int noOfMessages, WebSocketClientRunner webSocketClientRunner) {
+        double timeInSecs = getTimeInSecs(webSocketClientRunner.getStartTime(), webSocketClientRunner.getEndTime());
+        return (double) noOfMessages / timeInSecs;
     }
 
-    public static double getErrorPercentage(int noOfErrorMsgs, long totalNoOfMsgs) {
-        return ((double) noOfErrorMsgs * 100) / totalNoOfMsgs;
+    private static double getThroughput(long testStartTime, long testEndTime, long totalNoOfMessages) {
+        long totalTimeInMillis = testEndTime - testStartTime;
+        double totalTimeInSecs = (double) totalTimeInMillis / 1000;
+        return (double) totalNoOfMessages / totalTimeInSecs;
     }
+
+    private static double getTimeInSecs(long startTime, long endTime) {
+        return (double) (endTime - startTime) / 1000;
+    }
+
 }

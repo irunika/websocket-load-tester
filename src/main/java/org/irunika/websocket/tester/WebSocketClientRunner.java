@@ -22,6 +22,7 @@ public class WebSocketClientRunner implements Runnable {
     private final WebSocketClient webSocketClient;
     private long startTime;
     private String initialPayload;
+    private boolean stopSendingMessages = false;
 
     private static AtomicInteger noOfActiveConnections = new AtomicInteger();
     private static AtomicInteger maxNoOfActiveConnection = new AtomicInteger();
@@ -29,7 +30,7 @@ public class WebSocketClientRunner implements Runnable {
     public WebSocketClientRunner(int clientId, String url, int noOfMessages, int paylaodSize, CountDownLatch countDownLatch) {
         this.clientId = clientId;
         this.noOfMessages = noOfMessages;
-        this.webSocketClient = new WebSocketClient(clientId, url, noOfMessages, countDownLatch);
+        this.webSocketClient = new WebSocketClient(clientId, noOfMessages, url, countDownLatch);
         this.initialPayload = createPayload(paylaodSize);
     }
 
@@ -54,8 +55,15 @@ public class WebSocketClientRunner implements Runnable {
             webSocketClient.init();
             startTime = System.currentTimeMillis();
             log.info("Client {}: Sending messages...", clientId);
-            for (int i = 0; i < noOfMessages; i++) {
-                webSocketClient.sendText(String.format("%s%d", initialPayload, i));
+
+            int messageId = 0;
+            while (true) {
+                webSocketClient.sendText(String.format("%s%d", initialPayload, messageId));
+                if (stopSendingMessages || messageId == noOfMessages - 1) {
+                    webSocketClient.stop();
+                    break;
+                }
+                messageId++;
             }
 
         } catch (URISyntaxException | SSLException | InterruptedException e) {
@@ -74,6 +82,14 @@ public class WebSocketClientRunner implements Runnable {
 
     public int getNoOfErrorMessages() {
         return webSocketClient.getNoOfErrorMessages();
+    }
+
+    public void setStopSendingMessages(boolean stopSendingMessages) {
+        this.stopSendingMessages = stopSendingMessages;
+    }
+
+    public int getNoOfMessagesReceived() {
+        return webSocketClient.getNoOfMessagesReceived();
     }
 
     public int getClientId() {

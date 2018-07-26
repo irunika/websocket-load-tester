@@ -5,16 +5,19 @@ import com.beust.jcommander.Parameter;
 public class Args {
 
     @Parameter(names = {"-u", "--url"}, description = "URL of the endpoint")
-    String url = "ws://localhost:9092/proxy/ws";
+    private String url = "";
 
     @Parameter(names = {"-n", "--connections"}, description = "No of connections")
-    int noOfConnections = 100;
+    private int noOfConnections = 0;
 
     @Parameter(names = {"-m", "--messages"}, description = "No of messages per connection")
-    int noOfMessages = 10000;
+    private int noOfMessages = 0;
 
     @Parameter(names = {"-p", "--payload"}, description = "Payload size in bytes")
-    int payloadInBytes = 100;
+    private int payloadInBytes = 100;
+
+    @Parameter(names = {"-t", "--time"}, description = "Time for test in minutes")
+    private int testTimeInMinutes = 0;
 
     public String getUrl() {
         return url;
@@ -30,5 +33,9 @@ public class Args {
 
     public int getPayloadInBytes() {
         return payloadInBytes;
+    }
+
+    public int getTestTimeInMinutes() {
+        return testTimeInMinutes;
     }
 }

@@ -70,22 +70,25 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
     private final int clientId;
     private final WebSocketClientHandshaker handshaker;
     private final Queue<String> messageQueue;
-    private final int expectedNoOfMsgs;
     private final EventLoopGroup eventLoopGroup;
     private final CountDownLatch countDownLatch;
     private ChannelPromise handshakeFuture;
-    private final AtomicInteger noOfMessagesAtomicInteger = new AtomicInteger();
-    private final AtomicInteger noOfErrorMessagesAtomicInteger = new AtomicInteger();
+    private final AtomicInteger noOfMessagesReceived;
+    private final AtomicInteger noOfErrorMessagesAtomicInteger;
     private long endTime;
+    private int expectedNoOfMessages;
+    private ChannelHandlerContext ctx;
 
-    public WebSocketClientHandler(int clientId, WebSocketClientHandshaker handshaker, Queue<String> messageQueue,
-                                  int expectedNoOfMsgs, EventLoopGroup eventLoopGroup, CountDownLatch countDownLatch) {
+    public WebSocketClientHandler(int clientId, int expectedNoOfMessages, WebSocketClientHandshaker handshaker,
+                                  Queue<String> messageQueue, EventLoopGroup eventLoopGroup, CountDownLatch countDownLatch) {
         this.clientId = clientId;
+        this.expectedNoOfMessages = expectedNoOfMessages;
         this.handshaker = handshaker;
         this.messageQueue = messageQueue;
-        this.expectedNoOfMsgs = expectedNoOfMsgs;
         this.eventLoopGroup = eventLoopGroup;
         this.countDownLatch = countDownLatch;
+        this.noOfMessagesReceived = new AtomicInteger();
+        this.noOfErrorMessagesAtomicInteger = new AtomicInteger();
     }
 
     public ChannelFuture handshakeFuture() {
@@ -94,6 +97,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
         handshakeFuture = ctx.newPromise();
     }
 
@@ -104,6 +108,7 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        endTime = System.currentTimeMillis();
         logMessage("WebSocket Client disconnected!");
         eventLoopGroup.shutdownGracefully().addListener(future -> {
             WebSocketClientRunner.removeConnection();
@@ -139,18 +144,15 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
                 TextWebSocketFrame textFrame = (TextWebSocketFrame) frame;
                 String expected = messageQueue.remove();
                 String actual = textFrame.text();
-
                 if (!expected.equals(actual)) {
                     noOfErrorMessagesAtomicInteger.incrementAndGet();
                     logMessage(String.format("Error receiving message expected: %s, actual: %s", expected, actual));
                 }
 
-                noOfMessagesAtomicInteger.incrementAndGet();
-                if (noOfMessagesAtomicInteger.get() == expectedNoOfMsgs) {
-                    endTime = System.currentTimeMillis();
-                    ctx.writeAndFlush(new CloseWebSocketFrame(1000, "Going away")).addListener(ChannelFutureListener.CLOSE);
+                if (expectedNoOfMessages == noOfMessagesReceived.incrementAndGet()) {
+                    ctx.writeAndFlush(new CloseWebSocketFrame(1000, "Going away")).addListener(
+                            ChannelFutureListener.CLOSE);
                 }
-
             } else if (frame instanceof PongWebSocketFrame) {
                 logMessage("WebSocket Client received pong");
             } else if (frame instanceof CloseWebSocketFrame) {
@@ -178,5 +180,16 @@ public class WebSocketClientHandler extends ChannelInboundHandlerAdapter {
 
     public int getNoOfErrorMessages() {
         return noOfErrorMessagesAtomicInteger.get();
+    }
+
+    public int getNoOfMessagesReceived() {
+        return noOfMessagesReceived.get();
+    }
+
+    public void setStopReceivingMessages() {
+        if (expectedNoOfMessages == -1) {
+            ctx.writeAndFlush(new CloseWebSocketFrame(1000, "Going away")).addListener(
+                    ChannelFutureListener.CLOSE);
+        }
     }
 }
