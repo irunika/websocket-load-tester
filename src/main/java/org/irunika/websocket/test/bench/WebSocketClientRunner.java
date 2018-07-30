@@ -1,4 +1,4 @@
-package org.irunika.websocket.tester;
+package org.irunika.websocket.test.bench;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,7 @@ public class WebSocketClientRunner implements Runnable {
 
     private final int clientId;
     private final int noOfMessages;
+    private final long messageDelay;
     private final WebSocketClient webSocketClient;
     private long startTime;
     private String initialPayload;
@@ -27,11 +28,13 @@ public class WebSocketClientRunner implements Runnable {
     private static AtomicInteger noOfActiveConnections = new AtomicInteger();
     private static AtomicInteger maxNoOfActiveConnection = new AtomicInteger();
 
-    public WebSocketClientRunner(int clientId, String url, int noOfMessages, int paylaodSize, CountDownLatch countDownLatch) {
+    public WebSocketClientRunner(int clientId, String url, int noOfMessages, int payloadSize, long messageDelay,
+                                 CountDownLatch countDownLatch) {
         this.clientId = clientId;
         this.noOfMessages = noOfMessages;
+        this.messageDelay = messageDelay >= 0 ? messageDelay : 0;
         this.webSocketClient = new WebSocketClient(clientId, noOfMessages, url, countDownLatch);
-        this.initialPayload = createPayload(paylaodSize);
+        this.initialPayload = createPayload(payloadSize);
     }
 
     public static synchronized void addConnection() {
@@ -64,6 +67,7 @@ public class WebSocketClientRunner implements Runnable {
                     break;
                 }
                 messageId++;
+                Thread.sleep(messageDelay);
             }
 
         } catch (URISyntaxException | SSLException | InterruptedException e) {

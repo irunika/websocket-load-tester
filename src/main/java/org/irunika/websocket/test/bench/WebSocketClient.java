@@ -1,4 +1,4 @@
-package org.irunika.websocket.tester;
+package org.irunika.websocket.test.bench;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;

@@ -11,42 +11,18 @@
     <build>
         <finalName>${project.name}</finalName>
         <plugins>
-        <!-- download source code in Eclipse, best practice -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>false</downloadJavadocs>
-                </configuration>
-            </plugin>
-
-            <!-- Set a compiler level -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                </configuration>
-            </plugin>
-
             <!-- Maven Assembly Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4.1</version>
                 <configuration>
-                    <!-- get all project dependencies -->
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <!-- MainClass in mainfest make a executable jar -->
                     <archive>
                         <manifest>
-                            <mainClass>org.irunika.websocket.tester.TestRunner</mainClass>
+                            <mainClass>org.irunika.websocket.test.bench.TestRunner</mainClass>
                         </manifest>
                     </archive>
 
@@ -63,16 +39,18 @@
                 </executions>
             </plugin>
 
+            <!-- Set a compiler level -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <netty.version>4.1.26.Final</netty.version>
-        <sff4j.version>1.7.13</sff4j.version>
-        <jcommander.version>1.72</jcommander.version>
-        <jdk.version>1.8</jdk.version>
-        <project.name>websocket-test-bench</project.name>
-    </properties>
 
     <dependencies>
 
@@ -132,4 +110,12 @@
             <version>${jcommander.version}</version>
         </dependency>
     </dependencies>
+
+    <properties>
+        <netty.version>4.1.26.Final</netty.version>
+        <sff4j.version>1.7.13</sff4j.version>
+        <jcommander.version>1.72</jcommander.version>
+        <jdk.version>1.8</jdk.version>
+        <project.name>websocket-test-bench</project.name>
+    </properties>
 </project>

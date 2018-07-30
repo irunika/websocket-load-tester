@@ -1,10 +1,14 @@
-package org.irunika.websocket.tester;
+package org.irunika.websocket.test.bench;
 
 import com.beust.jcommander.JCommander;
-import org.irunika.websocket.tester.config.Args;
+import org.irunika.websocket.test.bench.config.Args;
+import org.irunika.websocket.test.bench.config.TimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -32,6 +36,7 @@ public class TestRunner {
         int noOfMessages = args.getNoOfMessages();
         int payloadInBytes = args.getPayloadInBytes();
         int testTimeInMinutes = args.getTestTimeInMinutes();
+        long messageDelay = args.getMessageDelay();
 
         CountDownLatch countDownLatch = new CountDownLatch(noOfConnections);
         List<WebSocketClientRunner> webSocketClientRunners = new LinkedList<>();
@@ -42,7 +47,8 @@ public class TestRunner {
         try {
             for (int clientId = 0; clientId < noOfConnections; clientId++) {
                 WebSocketClientRunner webSocketClientRunner = new WebSocketClientRunner(
-                        clientId, url, testTimeInMinutes > 0 ? -1 : noOfMessages, payloadInBytes, countDownLatch);
+                        clientId, url, testTimeInMinutes > 0 ? -1 : noOfMessages, payloadInBytes, messageDelay,
+                        countDownLatch);
                 webSocketClientRunners.add(webSocketClientRunner);
                 if (clientId == 0L) {
                     testStartTime = System.currentTimeMillis();
@@ -75,13 +81,22 @@ public class TestRunner {
             }
 
             log.info("Average TPS per client: {}", (totalTPS / noOfConnections));
-            log.info("Total time taken for the test: {} minutes",
-                     testTimeInMinutes > 0 ? testTimeInMinutes : getTimeInSecs(testStartTime, testEndTime) / 60);
-            log.info("Max no of concurrent connections: {}/{}", WebSocketClientRunner.getMaxNoOfActiveConnections(), noOfConnections);
+
+            TimeFormatter timeFormatter = new TimeFormatter(testTimeInMinutes > 0 ? testTimeInMinutes * 60 * 1000 :
+                                                                    testEndTime - testStartTime);
+            log.info("Total time taken for the test: {}hr {}min {}sec {}ms", timeFormatter.getHours(),
+                     timeFormatter.getMinutes(), timeFormatter.getSeconds(), timeFormatter.getMilliSeconds());
+
+            log.info("Max no of concurrent connections: {}/{}", WebSocketClientRunner.getMaxNoOfActiveConnections(),
+                     noOfConnections);
+
             log.info("Total no of message round trips: {}", totalNoOfMessages);
-            log.info("No of error messages:{} out of : {}", totalNoOfErrorMessages, totalNoOfMessages);
+
+            log.info("No of error messages: {} out of {}", totalNoOfErrorMessages, totalNoOfMessages);
+
             log.info("Throughput: {}", getThroughput(testStartTime, testEndTime, totalNoOfMessages));
-            log.info("Running is done!");
+
+            log.info("Done!");
         }
     }
 

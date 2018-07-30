@@ -1,4 +1,4 @@
-package org.irunika.websocket.tester.config;
+package org.irunika.websocket.test.bench.config;
 
 import com.beust.jcommander.Parameter;
 
@@ -19,6 +19,9 @@ public class Args {
     @Parameter(names = {"-t", "--time"}, description = "Time for test in minutes")
     private int testTimeInMinutes = 0;
 
+    @Parameter(names = {"-d, --delay"}, description = "Delay between two consecutive messages")
+    private long messageDelay = 0;
+
     public String getUrl() {
         return url;
     }
@@ -37,5 +40,9 @@ public class Args {
 
     public int getTestTimeInMinutes() {
         return testTimeInMinutes;
+    }
+
+    public long getMessageDelay() {
+        return messageDelay;
     }
 }

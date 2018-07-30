@@ -25,6 +25,7 @@ This can be used to test a WebSocket server with number of concurrent users with
 |-m , --messages|No of messages to be sent to the server per connection (This is not valid with -t option)|100|
 |-p , --payload|Payload size of a message in bytes|100|
 |-t , --time|Time period which test should run in minutes (If this option is enabled then messages will be sent for a given period of time ignoring the -m option)|0|
+|-d , --delay|Delay between two consecutive messages in a given client|0|
 
 eg: ```java -jar websocket-test-bench-jar-with-dependencies.jar -u ws://localhost:15500/websocket  -n 10 -m 100```
 
